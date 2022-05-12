@@ -20,7 +20,16 @@ const client = new MongoClient(uri);
 async function run() {
   try {
     await client.connect();
-    const database = client.db('').collection('');
+    const servicesCollection = client.db('Heatlh-Cure-DB').collection('Services');
+
+
+    //get services
+    app.get('/services' , async (req , res) => {
+      const query = await req.query;
+      const cursor = await servicesCollection.find(query)
+      const result = await cursor.toArray();
+      res.send(result);
+    })
 
 
 
