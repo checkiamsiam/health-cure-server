@@ -41,11 +41,43 @@ async function run() {
 
     app.post('/booked', async (req, res) => {
       const postItem = await req.body;
+      // const query = { treatmentName: postItem.treatmentName, date: postItem.date, time: postItem.time }
+      const query = { treatmentName: postItem.treatmentName, date: postItem.date, email: postItem.email }
+      // const alreadyBooked = await bookedCollection.findOne(query);
+      const alreadyBooked = await bookedCollection.findOne(query);
+      if (alreadyBooked) {
+        return res.send({ success: false, message: 'Already booked' })
+      }
+      // if (alreadyBooked2) {
+      //   return res.send({ success: false, message: 'You cant book two slot' })
+      // }
       const result = await bookedCollection.insertOne(postItem);
 
       res.send({ success: true, message: 'Booking successfully' })
 
+    })
 
+
+    app.get('/available', async (req, res) => {
+
+      const date = req.query.date 
+
+      const allServices = await servicesCollection.find({}).toArray();
+
+      const bookedOnThisDate = await bookedCollection.find({ date: date }).toArray();
+
+      allServices.forEach(service => {
+
+        const thisServiceBooked = bookedOnThisDate.filter(b => b.treatmentName === service.name)
+
+        const bookedSlot = thisServiceBooked.map(s => s.time)
+        
+
+        service.slots = service.slots.filter(s => !bookedSlot.includes(s))
+
+      })
+
+      res.send(allServices)
     })
 
 
