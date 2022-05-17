@@ -4,11 +4,26 @@ const app = express();
 var cors = require('cors');
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
+const jwt = require('jsonwebtoken');
 
 
 //middle-ware
 app.use(cors())
 app.use(express.json())
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'UnAuthorized access' });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: 'Forbidden access' })
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 
 const port = process.env.PORT || 5000;
@@ -33,11 +48,17 @@ async function run() {
       res.send(result);
     })
     // booked appointment
-    app.get('/booked', async (req, res) => {
+    app.get('/booked', verifyJWT , async (req, res) => {
       const query = await req.query;
-      const cursor = await bookedCollection.find(query)
-      const result = await cursor.toArray();
-      res.send(result);
+    
+      if(query.email === req.decoded.email){
+
+        const cursor = await bookedCollection.find(query)
+        const result = await cursor.toArray();
+        res.send(result);
+      }else{
+        res.status(403).send({ message: 'Forbidden access' })
+      }
     })
 
     app.post('/booked', async (req, res) => {
@@ -61,7 +82,7 @@ async function run() {
 
     app.get('/available', async (req, res) => {
 
-      const date = req.query.date 
+      const date = req.query.date
 
       const allServices = await servicesCollection.find({}).toArray();
 
@@ -72,7 +93,7 @@ async function run() {
         const thisServiceBooked = bookedOnThisDate.filter(b => b.treatmentName === service.name)
 
         const bookedSlot = thisServiceBooked.map(s => s.time)
-        
+
 
         service.slots = service.slots.filter(s => !bookedSlot.includes(s))
 
@@ -82,17 +103,16 @@ async function run() {
     })
 
 
-    app.post('/users' , async (req , res ) => {
+    app.post('/users', async (req, res) => {
       const postItem = await req.body;
-      const query = {email: postItem.email };
+      const query = { email: postItem.email };
       const alreadyUser = await userCollection.findOne(query);
-      if(alreadyUser){
-        return res.send({message: 'already added'})
+      var token = jwt.sign(query, process.env.TOKEN_SECRET, { expiresIn: '1h' });
+      if (alreadyUser) {
+        return res.send({ message: 'already added', accessToken: token })
       }
       const result = await userCollection.insertOne(postItem);
-      res.send({message : 'user data added to database'})
-
-
+      res.send({ accessToken: token })
     })
 
     // app.put('/users/:email' , async (req , res ) => {
