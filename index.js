@@ -22,6 +22,7 @@ async function run() {
     await client.connect();
     const servicesCollection = client.db('Heatlh-Cure-DB').collection('Services');
     const bookedCollection = client.db('Heatlh-Cure-DB').collection('Booked');
+    const userCollection = client.db('Heatlh-Cure-DB').collection('users');
 
 
     //get services
@@ -79,6 +80,36 @@ async function run() {
 
       res.send(allServices)
     })
+
+
+    app.post('/users' , async (req , res ) => {
+      const postItem = await req.body;
+      const query = {email: postItem.email };
+      const alreadyUser = await userCollection.findOne(query);
+      if(alreadyUser){
+        return res.send({message: 'already added'})
+      }
+      const result = await userCollection.insertOne(postItem);
+      res.send({message : 'user data added to database'})
+
+
+    })
+
+    // app.put('/users/:email' , async (req , res ) => {
+    //   const postItem = await req.body;
+    //   const query = {email: postItem.email };
+    //   const alreadyUser = await userCollection.findOne(query);
+    //   if(alreadyUser){
+    //     return res.send({message: 'already added'})
+    //   }
+    //   const result = await userCollection.insertOne(postItem);
+    //   res.send({message : 'user data added to database'})
+
+
+    // })
+
+
+
 
 
   } finally {
