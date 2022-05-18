@@ -109,6 +109,20 @@ async function run() {
     })
 
 
+    app.put('/users/:email', verifyJWT , async (req, res) => {
+      const email = await req.params.email
+      const filter = { email };
+      const options = { upsert : true };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+      const result = await userCollection.updateOne(filter , updateDoc , options) ;
+      res.send(result)
+    })
+
+
     app.post('/users', async (req, res) => {
       const postItem = await req.body;
       const query = { email: postItem.email };
