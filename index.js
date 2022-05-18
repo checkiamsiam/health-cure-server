@@ -48,15 +48,15 @@ async function run() {
       res.send(result);
     })
     // booked appointment
-    app.get('/booked', verifyJWT , async (req, res) => {
+    app.get('/booked', verifyJWT, async (req, res) => {
       const query = await req.query;
-    
-      if(query.email === req.decoded.email){
+
+      if (query.email === req.decoded.email) {
 
         const cursor = await bookedCollection.find(query)
         const result = await cursor.toArray();
         res.send(result);
-      }else{
+      } else {
         res.status(403).send({ message: 'Forbidden access' })
       }
     })
@@ -103,6 +103,12 @@ async function run() {
     })
 
 
+    app.get('/users', verifyJWT , async (req, res) => {
+      const users = await userCollection.find().toArray()
+      res.send(users)
+    })
+
+
     app.post('/users', async (req, res) => {
       const postItem = await req.body;
       const query = { email: postItem.email };
@@ -111,7 +117,7 @@ async function run() {
       if (alreadyUser) {
         return res.send({ message: 'already added', accessToken: token })
       }
-      const result = await userCollection.insertOne(postItem);
+      const result = await userCollection.insertOne({email : postItem.email , role : 'member'});
       res.send({ accessToken: token })
     })
 
