@@ -39,14 +39,44 @@ async function run() {
     const bookedCollection = client.db('Heatlh-Cure-DB').collection('Booked');
     const userCollection = client.db('Heatlh-Cure-DB').collection('users');
 
+    // const verifyAdmin = (req, res, next) => {
+
+    //   const requester = req.decoded.email;
+    //   const currentUser = userCollection.findOne({ email: requester })
+    //   if ((currentUser.role === 'admin')) {
+
+    //     next()
+    //   } else {
+    //     return res.status(403).send({ message: 'Forbidden access' })
+    //   }
+
+    // }
+
 
     //get services
+    app.get('/services' , async (req, res) => {
+      const query = await req.query;
+      const cursor = await servicesCollection.find(query)
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    //use project to find one filed of collection
+    app.get('/services/name', async (req, res) => {
+      const cursor = await servicesCollection.find({}).project({ name: 1 })
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+
+
     app.get('/services', async (req, res) => {
       const query = await req.query;
       const cursor = await servicesCollection.find(query)
       const result = await cursor.toArray();
       res.send(result);
     })
+   
     // booked appointment
     app.get('/booked', verifyJWT, async (req, res) => {
       const query = await req.query;
@@ -103,22 +133,22 @@ async function run() {
     })
 
 
-    app.get('/users', verifyJWT , async (req, res) => {
+    app.get('/users', verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray()
       res.send(users)
     })
 
 
-    app.put('/users/:email', verifyJWT , async (req, res) => {
+    app.put('/users/:email', verifyJWT, async (req, res) => {
       const email = await req.params.email
       const filter = { email };
-      const options = { upsert : true };
+      const options = { upsert: true };
       const updateDoc = {
         $set: {
           role: 'admin'
         },
       };
-      const result = await userCollection.updateOne(filter , updateDoc , options) ;
+      const result = await userCollection.updateOne(filter, updateDoc, options);
       res.send(result)
     })
 
@@ -131,7 +161,7 @@ async function run() {
       if (alreadyUser) {
         return res.send({ message: 'already added', accessToken: token })
       }
-      const result = await userCollection.insertOne({email : postItem.email , role : 'member'});
+      const result = await userCollection.insertOne({ email: postItem.email, role: 'member' });
       res.send({ accessToken: token })
     })
 
