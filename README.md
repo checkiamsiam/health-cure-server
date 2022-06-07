@@ -1,4 +1,4 @@
-# Bycyle Soul server side (a node js project using express)
+# Health Cure server side (a node js project using express)
 
 ## Client site LInk [https://health-cure-doctor-s-portal.web.app/](https://health-cure-doctor-s-portal.web.app/)
 
